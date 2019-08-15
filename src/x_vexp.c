@@ -964,6 +964,9 @@ ex_dzdetect(struct expr *expr)
 {
         char *etype;
 
+        /*
+        TODO: nivlekp: do you need to fix this?
+        */
         if ((!expr->exp_error) & EE_DZ) {
                 if (IS_EXPR(expr))
                         etype = "expr";

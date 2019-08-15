@@ -31,6 +31,8 @@ extern struct ex_ex *ex_eval(struct expr *expr, struct ex_ex *eptr,
 
 #ifdef PD
 static t_class *expr_class;
+/* TODO: nivlekp */
+static t_class *if_class;
 static t_class *expr_tilde_class;
 static t_class *fexpr_tilde_class;
 #else /* MSP */
@@ -252,7 +254,7 @@ Nexpr_new(t_symbol *s, int ac, t_atom *av)
 
 #ifdef PD
         /*
-         * figure out if we are expr, expr~, or fexpr~
+         * figure out if we are expr, expr~, fexpr~, or if
          */
         if (!strcmp("expr", s->s_name)) {
                 x = (t_expr *)pd_new(expr_class);
@@ -263,6 +265,9 @@ Nexpr_new(t_symbol *s, int ac, t_atom *av)
         } else if (!strcmp("fexpr~", s->s_name)) {
                 x = (t_expr *)pd_new(fexpr_tilde_class);
                 SET_FEXPR_TILDE(x);
+        } else if (!strcmp("if", s->s_name)) {
+                x = (t_expr *)pd_new(if_class);
+                SET_IF(x);
         } else {
                 post("expr_new: bad object name '%s'", s->s_name);
                 /* assume expr */
@@ -369,7 +374,18 @@ SDY the following coredumps why?
                         break;
                 }
         }
-        if (IS_EXPR(x)) {
+        /* TODO: nivlekp
+         * See if this is correct way to do it?
+         * Well, how many outlets do we need here?
+         * So we might need more than one outlet
+         * We need at least one outlet, but if there is a second expression
+         * separated by semicolon
+         * which is the same as the expr object?
+         *
+         * Well I guess it is pretty obvious that we should have a look at
+         * x->exp_nexpr to see what the logic is...
+         */
+        if (IS_EXPR(x) || IS_IF(x)) {
                 for (i = 0; i < x->exp_nexpr; i++)
                         x->exp_outlet[i] = outlet_new(&x->exp_ob, 0);
         } else {
@@ -831,6 +847,18 @@ expr_setup(void)
                                                         gensym("version"), 0);
         class_sethelpsymbol(fexpr_tilde_class, gensym("expr"));
 
+        /*
+         * TODO: nivlekp
+         * if initialization
+         */
+        if_class = class_new(gensym("if"), (t_newmethod)expr_new,
+            (t_method)expr_ff, sizeof(t_expr), 0, A_GIMME, 0);
+        class_addlist(if_class, expr_list);
+        exprproxy_class = class_new(gensym("exprproxy"), 0,
+                                        0, sizeof(t_exprproxy), CLASS_PD, 0);
+        class_addfloat(exprproxy_class, exprproxy_float);
+        class_addmethod(if_class, (t_method)expr_version,
+                                                        gensym("version"), 0);
 }
 
 void

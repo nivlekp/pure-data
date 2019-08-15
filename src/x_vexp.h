@@ -149,32 +149,42 @@ struct ex_ex {
 #define ET_VAR          21              /* variable */
 
 /* defines for ex_flags */
-#define EF_TYPE_MASK    0x07    /* first three bits define the type of expr */
+#define EF_TYPE_MASK    0x0f    /* first four bits define the type of expr */
 #define EF_EXPR         0x01    /* expr  - control in and out */
 #define EF_EXPR_TILDE   0x02    /* expr~ signal and control in, signal out */
 #define EF_FEXPR_TILDE  0x04    /* fexpr~ filter expression */
+#define EF_IF           0x08    /* if -control in and out */
 
-#define EF_STOP         0x08    /* is it stopped used for expr~ and fexpr~ */
-#define EF_VERBOSE      0x10    /* verbose mode */
+#define EF_STOP         0x10    /* is it stopped used for expr~ and fexpr~ */
+#define EF_VERBOSE      0x20    /* verbose mode */
 
 #define IS_EXPR(x)        ((((x)->exp_flags&EF_TYPE_MASK)|EF_EXPR) == EF_EXPR)
 #define IS_EXPR_TILDE(x)  \
                  ((((x)->exp_flags&EF_TYPE_MASK)|EF_EXPR_TILDE)==EF_EXPR_TILDE)
 #define IS_FEXPR_TILDE(x) \
                ((((x)->exp_flags&EF_TYPE_MASK)|EF_FEXPR_TILDE)==EF_FEXPR_TILDE)
+#define IS_IF(x)        ((((x)->exp_flags&EF_TYPE_MASK)|EF_IF) == EF_IF)
 
 #define SET_EXPR(x)     (x)->exp_flags |= EF_EXPR; \
                         (x)->exp_flags &= ~EF_EXPR_TILDE;  \
-                        (x)->exp_flags &= ~EF_FEXPR_TILDE;
+                        (x)->exp_flags &= ~EF_FEXPR_TILDE; \
+                        (x)->exp_flags &= ~EF_IF;
 
+//TODO: nivlekp:
 #define SET_EXPR_TILDE(x)       (x)->exp_flags &= ~EF_EXPR; \
                                 (x)->exp_flags |= EF_EXPR_TILDE;  \
-                                (x)->exp_flags &= ~EF_FEXPR_TILDE;
+                                (x)->exp_flags &= ~EF_FEXPR_TILDE; \
+                                (x)->exp_flags &= ~EF_IF;
 
 #define SET_FEXPR_TILDE(x)      (x)->exp_flags &= ~EF_EXPR; \
                                 (x)->exp_flags &= ~EF_EXPR_TILDE;  \
-                                (x)->exp_flags |= EF_FEXPR_TILDE;
+                                (x)->exp_flags |= EF_FEXPR_TILDE; \
+                                (x)->exp_flags &= ~EF_IF;
 
+#define SET_IF(x)       (x)->exp_flags &= ~EF_EXPR; \
+                        (x)->exp_flags &= ~EF_EXPR_TILDE; \
+                        (x)->exp_flags &= ~EF_FEXPR_TILDE; \
+                        (x)->exp_flags |= EF_IF;
 /*
  * defines for expr_error
  */
@@ -190,7 +200,7 @@ typedef struct expr {
 #else /* MSP */
         t_pxobject exp_ob;
 #endif
-        int     exp_flags;              /* are we expr~, fexpr~, or expr */
+        int     exp_flags;              /* are we expr~, fexpr~, expr or if */
         int     exp_error;              /* reported errors */
         int     exp_nexpr;              /* number of expressions */
         char    *exp_string;            /* the full expression string */
