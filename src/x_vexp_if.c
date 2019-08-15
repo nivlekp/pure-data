@@ -31,10 +31,10 @@ extern struct ex_ex *ex_eval(struct expr *expr, struct ex_ex *eptr,
 
 #ifdef PD
 static t_class *expr_class;
-/* TODO: nivlekp */
-static t_class *if_class;
 static t_class *expr_tilde_class;
 static t_class *fexpr_tilde_class;
+/* TODO: nivlekp */
+static t_class *if_class;
 #else /* MSP */
 void *expr_tilde_class;
 #endif

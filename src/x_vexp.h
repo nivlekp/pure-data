@@ -170,7 +170,6 @@ struct ex_ex {
                         (x)->exp_flags &= ~EF_FEXPR_TILDE; \
                         (x)->exp_flags &= ~EF_IF;
 
-//TODO: nivlekp:
 #define SET_EXPR_TILDE(x)       (x)->exp_flags &= ~EF_EXPR; \
                                 (x)->exp_flags |= EF_EXPR_TILDE;  \
                                 (x)->exp_flags &= ~EF_FEXPR_TILDE; \
@@ -181,6 +180,7 @@ struct ex_ex {
                                 (x)->exp_flags |= EF_FEXPR_TILDE; \
                                 (x)->exp_flags &= ~EF_IF;
 
+//TODO: nivlekp:
 #define SET_IF(x)       (x)->exp_flags &= ~EF_EXPR; \
                         (x)->exp_flags &= ~EF_EXPR_TILDE; \
                         (x)->exp_flags &= ~EF_FEXPR_TILDE; \
