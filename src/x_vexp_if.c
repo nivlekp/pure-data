@@ -421,8 +421,11 @@ expr_perform(t_int *w)
                  * the data because, outputs could be the same buffer as
                  * inputs
                  */
-                if ( x->exp_nexpr == 1)
+                if ( x->exp_nexpr == 1) {
+                        /* TODO: (nivlekp) delete this debug line */
+                        /* post("debug: x->exp_nexpr == 1"); */
                         ex_eval(x, x->exp_stack[0], &x->exp_res[0], 0);
+                }
                 else {
                         res.ex_type = ET_VEC;
                         for (i = 0; i < x->exp_nexpr; i++) {
@@ -477,6 +480,7 @@ expr_perform(t_int *w)
         return (w + 2);
 }
 
+/* TODO: (nivlekp) might have to change this */
 static void
 expr_dsp(t_expr *x, t_signal **sp)
 {
@@ -895,6 +899,9 @@ max_ex_tab(struct expr *expr, fts_symbol_t s, struct ex_ex *arg,
         int size;
         long indx;
         t_word *wvec;
+        t_float *op;    /* output pointer */
+        t_float *ap;    /* arg pointer */
+        int j;
 
         if (!s || !(garray = (t_garray *)pd_findbyclass(s, garray_class)) ||
             !garray_getfloatwords(garray, &size, &wvec))
@@ -914,14 +921,44 @@ max_ex_tab(struct expr *expr, fts_symbol_t s, struct ex_ex *arg,
                 /* strange interpolation code deleted here -msp */
                 indx = arg->ex_flt;
                 break;
-
+        /* TODO: (nivlekp) add a case for ET_VEC?
+         * cannot just set indx = arg->ex_vec
+         * because it is a pointer, not a float
+         */
+        case ET_VI:
+        /* case ET_VEC: */
+                optr->ex_type = ET_VEC;
+                optr->ex_vec = (t_float *)
+                    fts_malloc(sizeof (t_float)*expr->exp_vsize);
+                op = optr->ex_vec;
+                ap = arg->ex_vec;
+                j = expr->exp_vsize;
+                while (j--) {
+                        indx = (int)*ap;
+                        if (indx < 0) indx = 0;
+                        else if (indx >= size) indx = size - 1;
+                        *op = (t_float)wvec[indx].w_float;
+                        ap++; op++;
+                }
+                /* Cool, so we've got the correct size and correct indx */
+                /* post("debug: indx = %d", indx); */
+                /* Now more debugging */
+                /* post("debug: wvec[indx].w_float = %f", wvec[indx].w_float); */
+                /* Cool, now we've also got the correct wvec[indx].w_float value */
+                /* So what is the problem? */
+                /* Now post the value of *op */
+                /* post("debug: *op = %f", *(op-1)); */
+                /* Cool, now we've also got the correct value for the last *op */
+                break;
         default:        /* do something with strings */
                 pd_error(expr, "expr: bad argument for table '%s'\n", fts_symbol_name(s));
                 indx = 0;
         }
-        if (indx < 0) indx = 0;
-        else if (indx >= size) indx = size - 1;
-        optr->ex_flt = wvec[indx].w_float;
+        if (optr->ex_type == ET_FLT) {
+                if (indx < 0) indx = 0;
+                else if (indx >= size) indx = size - 1;
+                optr->ex_flt = wvec[indx].w_float;
+        }
 #else /* MSP */
         /*
          * table lookup not done for MSP yet
