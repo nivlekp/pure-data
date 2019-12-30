@@ -1085,13 +1085,27 @@ ex_eval(struct expr *expr, struct ex_ex *eptr, struct ex_ex *optr, int idx)
                 return(++eptr);
 
         case ET_VI:
+                /* TODO: (nivlekp) delete this debug line.
+                 * Apparently we do go to this line
+                post("Do we ever go to this line? (ET_VI)");
+                 * In eval_tab, we call ex_eval with the third argument
+                 * being &arg, where arg.ex_type has been set to zero,
+                 * therefore optr->ex_type != ET_VEC (confirmed by posting
+                 * things).
+                 */
                 if (optr->ex_type != ET_VEC)
+                {
                         *optr = expr->exp_var[eptr->ex_int];
+                }
                 else if (optr->ex_vec != expr->exp_var[eptr->ex_int].ex_vec)
                         memcpy(optr->ex_vec, expr->exp_var[eptr->ex_int].ex_vec,
                                         expr->exp_vsize * sizeof (t_float));
                 return(++eptr);
         case ET_VEC:
+                /* TODO: (nivlekp) delete this debug line.
+                 * We do not go here.
+                post("Do we ever go to this line? (ET_VEC)");
+                 */
                 if (optr->ex_type != ET_VEC) {
                         optr->ex_type = ET_VEC;
                         optr->ex_vec = eptr->ex_vec;
@@ -1142,6 +1156,10 @@ ex_eval(struct expr *expr, struct ex_ex *eptr, struct ex_ex *optr, int idx)
 
         case ET_TBL:
         case ET_SI:
+                /* TODO: (nivlekp) delete this debug line.
+                 * Apparently we would go to this line.
+                post("Do we ever go to this line? (ET_TBL)");
+                 */
                 return (eval_tab(expr, eptr, optr, idx));
         case ET_FUNC:
                 return (eval_func(expr, eptr, optr, idx));
@@ -1405,6 +1423,9 @@ eval_tab(struct expr *expr, struct ex_ex *eptr, struct ex_ex *optr, int idx)
         int notable = 0;
 
         if (eptr->ex_type == ET_SI) {
+                /* TODO: (nivlekp) just a sanity check here
+                post("Just to make sure eptr->ex_type != ET_SI(this should not appear)");
+                 */
                 if (!expr->exp_var[eptr->ex_int].ex_ptr) {
                         if (!(expr->exp_error & EE_NOTABLE)) {
                                 post("expr: syntax error: no string for inlet %d",
@@ -1433,8 +1454,12 @@ eval_tab(struct expr *expr, struct ex_ex *eptr, struct ex_ex *optr, int idx)
         if (!(eptr = ex_eval(expr, ++eptr, &arg, idx)))
                 return (eptr);
 
+        /* TODO: (nivlekp) remove this for now?
+         * Why are we assuming the type of optr?
+         * This does not work well with table lookup with signal inlet
         optr->ex_type = ET_INT;
         optr->ex_int = 0;
+         */
         if (!notable)
                 (void)max_ex_tab(expr, (t_symbol *)tbl, &arg, optr);
         if (arg.ex_type == ET_VEC)

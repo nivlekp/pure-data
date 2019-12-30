@@ -422,11 +422,17 @@ expr_perform(t_int *w)
                  * inputs
                  */
                 if ( x->exp_nexpr == 1) {
-                        /* TODO: (nivlekp) delete this debug line */
-                        /* post("debug: x->exp_nexpr == 1"); */
+                        /* TODO: (nivlekp) delete this debug line.
+                         * Apparently we go into this branch no matter whether
+                         * we are using [expr~ arr[$v1]] or [expr~ arr[$v1]+0]
+                         * or even [expr~ pow($v1, 2)].
+                        post("debug: x->exp_nexpr == 1");
+                         */
                         ex_eval(x, x->exp_stack[0], &x->exp_res[0], 0);
                 }
                 else {
+                        /* TODO: (nivlekp) delete this debug line */
+                        /* post("debug: x->exp_nexpr != 1"); */
                         res.ex_type = ET_VEC;
                         for (i = 0; i < x->exp_nexpr; i++) {
                                 res.ex_vec = x->exp_tmpres[i];
@@ -448,6 +454,10 @@ expr_perform(t_int *w)
         /*
          * since the output buffer could be the same as one of the inputs
          * we need to keep the output in  a different buffer
+         */
+        /* TODO: (nivlekp) delete this debug line
+         * Seems like we never gets here either
+        post("Do we ever go to this line?");
          */
         for (i = 0; i < x->exp_vsize; i++) for (j = 0; j < x->exp_nexpr; j++) {
                 res.ex_type = 0;
@@ -508,6 +518,10 @@ expr_dsp(t_expr *x, t_signal **sp)
                                                           nv,  x->exp_nivec);
                           abort();
                         }
+                        /* TODO: (nivlekp)
+                         * this is where the vector from the inlet got stored in
+                         * x->exp_var[i].ex_vec (I think)
+                         */
                         x->exp_var[i].ex_vec  = sp[nv]->s_vec;
                         nv++;
                 }
@@ -532,10 +546,18 @@ expr_dsp(t_expr *x, t_signal **sp)
          * new size free all the buffers
          */
         if (x->exp_p_res[0]) {
+                /* TODO: (nivlekp) do we ever reach here?
+                 * Seems like we reached here.
+                post("seems pretty okay");
+                 */
                 if (!newsize)
                         return;
                 /*
                  * if new size, reallocate all the previous buffers for fexpr~
+                 */
+                /* TODO: (nivlekp) do we ever reach here?
+                 * Seems like we reached here.
+                post("seems pretty complicated");
                  */
                 for (i = 0; i < x->exp_nexpr; i++) {
                         fts_free(x->exp_p_res[i]);
@@ -911,13 +933,17 @@ max_ex_tab(struct expr *expr, fts_symbol_t s, struct ex_ex *arg,
                 pd_error(expr, "no such table '%s'", ex_symname(s));
                 return (1);
         }
+        /* TODO: (nivlekp) comment this for now?
         optr->ex_type = ET_FLT;
+         */
 
         switch (arg->ex_type) {
         case ET_INT:
+                optr->ex_type = ET_FLT;
                 indx = arg->ex_int;
                 break;
         case ET_FLT:
+                optr->ex_type = ET_FLT;
                 /* strange interpolation code deleted here -msp */
                 indx = arg->ex_flt;
                 break;
@@ -927,9 +953,19 @@ max_ex_tab(struct expr *expr, fts_symbol_t s, struct ex_ex *arg,
          */
         case ET_VI:
         /* case ET_VEC: */
-                optr->ex_type = ET_VEC;
+                /* TODO: (nivlekp) the problem is here, because optr->ex_vec is
+                 * actually x->exp_res[0].ex_vec in here, so if we malloc a new
+                 * address for optr->ex_vec, the sample wouldn't get written to
+                 * the outlet. To find out the solution, we could look into how
+                 * they did it in func_eval
                 optr->ex_vec = (t_float *)
                     fts_malloc(sizeof (t_float)*expr->exp_vsize);
+                */
+                if (optr->ex_type != ET_VEC) {
+                    optr->ex_type = ET_VEC;
+                    optr->ex_vec = (t_float *)
+                        fts_malloc(sizeof (t_float)*expr->exp_vsize);
+                }
                 op = optr->ex_vec;
                 ap = arg->ex_vec;
                 j = expr->exp_vsize;
